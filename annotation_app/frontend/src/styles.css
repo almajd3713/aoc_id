@@ -1,0 +1,152 @@
+:root {
+  color-scheme: light;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  color: #182025;
+  background:
+    radial-gradient(circle at top left, rgba(217, 140, 54, 0.18), transparent 32%),
+    linear-gradient(180deg, #f7f1e7 0%, #eef1ec 100%);
+}
+
+body {
+  margin: 0;
+}
+
+.page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.hero,
+.layout {
+  display: grid;
+  gap: 18px;
+}
+
+.hero {
+  grid-template-columns: 1.7fr 1fr;
+  margin-bottom: 18px;
+}
+
+.layout {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.panel {
+  background: rgba(255, 252, 248, 0.88);
+  border: 1px solid rgba(88, 74, 53, 0.14);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 18px 40px rgba(84, 69, 45, 0.08);
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+  color: #8a612d;
+}
+
+.lede,
+.path,
+.message {
+  color: #4d5a60;
+}
+
+.controls,
+.block,
+.actions {
+  display: grid;
+  gap: 10px;
+}
+
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+textarea,
+select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #c7b9a6;
+  padding: 12px;
+  background: #fffdfa;
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  background: #b95c22;
+  color: white;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #b9aea3;
+  cursor: not-allowed;
+}
+
+.stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  background: #f4ebdf;
+  border-radius: 14px;
+  padding: 10px 14px;
+  min-width: 82px;
+}
+
+.table-wrap {
+  overflow: auto;
+}
+
+.error-card {
+  background: #fff2eb;
+  border: 1px solid #e6b8a2;
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: #7a3215;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid #eadfd2;
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.queue {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.queue-item {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  border-radius: 14px;
+}
+
+.queue-item.active {
+  outline: 2px solid #5d7f6d;
+}
+
+@media (max-width: 960px) {
+  .hero,
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

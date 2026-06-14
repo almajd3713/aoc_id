@@ -77,3 +77,68 @@
   year={2018}
 }
 ```
+
+# Masked Dataset Builder
+
+Use `scripts/build_masked_dataset.py` to prepare an annotation-ready pool from `data/train/MultiTrain.Shuffled.csv`.
+
+```bash
+python3 scripts/build_masked_dataset.py
+```
+
+Default behavior:
+- uses `MultiTrain.Shuffled.csv` as the source pool
+- removes unusable rows, exact duplicates, and conservative near-duplicates
+- samples a balanced pool across `MSA`, `DIAL_EGY`, `DIAL_GLF`, and `DIAL_LEV`
+- writes annotation chunk files of `80` rows each to `artifacts/masked_dataset/chunks/`
+- copies the first `2` chunks into `artifacts/masked_dataset/pilot/` for a pilot annotation pass
+- creates `clean_candidates.csv`, `rejections.csv`, `chunk_manifest.csv`, and `summary.json`
+
+The chunk files include blank `masked_text` and `mask_spans_json` fields so they can be annotated later and merged safely with stable `example_id` values.
+
+Placeholder rules:
+- use typed placeholders such as `[PERSON_1]` and `[LOC_1]`
+- numbering restarts in each row
+- repeated mentions of the same entity in one row should reuse the same placeholder
+- numbering should be contiguous within a mask type in that row, e.g. `[PERSON_1]`, `[PERSON_2]`
+
+After annotation, validate and merge approved chunks with:
+
+```bash
+python3 scripts/merge_masked_chunks.py
+```
+
+The masking rubric used by the merge validator is documented in `docs/masking_guidelines.md`.
+
+# Annotation Coordinator
+
+A local React + FastAPI coordinator now lives under `annotation_app/`. It is designed for the chunk workflow in `artifacts/masked_dataset/` and keeps accepted annotations in a managed workspace under `app_state/projects/` instead of overwriting source chunks.
+
+Backend:
+
+```bash
+pip install -r requirements-annotation-app.txt
+python3 -m annotation_app.backend
+```
+
+Frontend:
+
+```bash
+cd annotation_app/frontend
+npm install
+npm run dev
+```
+
+Key behavior:
+- defaults to the `pilot` project from `app_state/config.json`
+- generates a prompt for the current chunk
+- accepts a pasted full-CSV response from an external AI
+- previews validation and changed rows before acceptance
+- writes accepted chunk copies to `app_state/projects/<project>/accepted/`
+- auto-runs merge into `app_state/projects/<project>/merged/`
+
+Important files:
+- backend app: `annotation_app/backend/api.py`
+- shared workflow services: `annotation_app/backend/workflow.py`
+- frontend app: `annotation_app/frontend/src/App.tsx`
+- app configuration: `app_state/config.json`

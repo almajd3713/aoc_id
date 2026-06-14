@@ -1,0 +1,27 @@
+You are annotating Arabic masking data for the `{dataset_mode}` project.
+
+Current chunk:
+- chunk id: `{chunk_id}`
+- file: `{chunk_file}`
+- path: `{chunk_path}`
+- rows: `{row_count}`
+
+Instructions:
+- Edit the CSV in place conceptually and return the full CSV content only.
+- Keep `original_text` unchanged.
+- Fill `masked_text`, `mask_spans_json`, `mask_count`, `annotation_status`, and `notes` when needed.
+- Use typed placeholders like `[PERSON_1]`, `[LOC_1]`, `[ORG_1]`.
+- Restart numbering per row.
+- Keep numbering contiguous within each mask type in a row.
+- Reuse the same placeholder for repeated mentions of the same entity in the same row.
+- If uncertain, keep the row pending and explain briefly in `notes`.
+- Do not rename columns or change schema.
+- Return the full edited CSV only, covering every row in the chunk.
+
+Masking guidelines:
+{guidelines}
+
+Raw CSV for the whole chunk:
+```csv
+{chunk_csv}
+```

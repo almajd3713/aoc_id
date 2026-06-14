@@ -1,0 +1,35 @@
+{
+  "clean_candidate_count": 60122,
+  "sampled_count": 16000,
+  "chunk_count": 200,
+  "chunk_size": 80,
+  "pilot_chunk_count": 2,
+  "pilot_row_count": 160,
+  "dialect_counts": {
+    "DIAL_EGY": 4000,
+    "DIAL_GLF": 4000,
+    "DIAL_LEV": 4000,
+    "MSA": 4000
+  },
+  "rejection_counts": {
+    "empty_after_normalization": 894,
+    "exact_duplicate": 2226,
+    "near_duplicate": 8,
+    "too_little_arabic": 8,
+    "too_short": 23281,
+    "too_short_chars": 2
+  },
+  "mask_types": [
+    "PERSON",
+    "LOC",
+    "ORG",
+    "DATE",
+    "TIME",
+    "NUM",
+    "HANDLE",
+    "URL",
+    "EMAIL",
+    "PHONE",
+    "ID"
+  ]
+}

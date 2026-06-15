@@ -8,25 +8,47 @@
       "label": "Pilot",
       "dataset_mode": "pilot",
       "workspace_dir": "app_state/projects/pilot",
+      "base_source_chunks_dir": "artifacts/masked_dataset/pilot/chunks",
+      "base_source_manifest_path": "artifacts/masked_dataset/pilot/pilot_manifest.csv",
       "source_chunks_dir": "artifacts/masked_dataset/pilot/chunks",
       "source_manifest_path": "artifacts/masked_dataset/pilot/pilot_manifest.csv",
+      "active_round": "base",
       "prompt_template_path": "app_state/prompt_template.txt",
       "masking_guidelines_path": "docs/masking_guidelines.md",
       "auto_advance": true,
       "auto_merge": true,
-      "allow_pending_accept": false
+      "allow_pending_accept": false,
+      "include_row_id_in_prompt": true,
+      "agent_import_schema": "original_masked_v1",
+      "row_matching": "strict_row_id",
+      "validate_original_text_with_row_id": false,
+      "uncertainty_markers": [
+        "[UNCERTAIN]",
+        "[REVIEW]"
+      ]
     },
     "full": {
       "label": "Full Dataset",
       "dataset_mode": "full",
       "workspace_dir": "app_state/projects/full",
+      "base_source_chunks_dir": "artifacts/masked_dataset/chunks",
+      "base_source_manifest_path": "artifacts/masked_dataset/chunk_manifest.csv",
       "source_chunks_dir": "artifacts/masked_dataset/chunks",
       "source_manifest_path": "artifacts/masked_dataset/chunk_manifest.csv",
+      "active_round": "base",
       "prompt_template_path": "app_state/prompt_template.txt",
       "masking_guidelines_path": "docs/masking_guidelines.md",
       "auto_advance": true,
       "auto_merge": true,
-      "allow_pending_accept": false
+      "allow_pending_accept": false,
+      "include_row_id_in_prompt": true,
+      "agent_import_schema": "original_masked_v1",
+      "row_matching": "strict_row_id",
+      "validate_original_text_with_row_id": false,
+      "uncertainty_markers": [
+        "[UNCERTAIN]",
+        "[REVIEW]"
+      ]
     }
   }
 }

@@ -1,0 +1,11 @@
+{
+  "round_number": 1,
+  "sampled_count": 4,
+  "chunk_count": 1,
+  "chunk_size": 50,
+  "dialect_counts": {
+    "DIAL_EGY": 2,
+    "DIAL_LEV": 2
+  },
+  "manifest_path": "/home/reeler/_hsproject_online/aoc_id/app_state/projects/pilot/refill_rounds/round_0001/chunk_manifest.csv"
+}

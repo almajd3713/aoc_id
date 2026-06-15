@@ -10,9 +10,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from annotation_app.backend.workflow import (
+    ConfigValidationError,
     accept_import,
+    activate_refill_round,
+    apply_retry_import,
     build_prompt,
+    clear_invalid_retry_rows,
+    generate_refill_round,
     get_chunk_detail,
+    load_backlog_rows,
+    get_invalid_retry_rows,
     get_next_chunk,
     get_project_paths,
     get_project_summary,
@@ -20,6 +27,7 @@ from annotation_app.backend.workflow import (
     load_config,
     merge_chunks,
     preview_import,
+    preview_retry_import,
     save_config,
 )
 
@@ -30,6 +38,10 @@ class ConfigUpdate(BaseModel):
 
 class CsvImportRequest(BaseModel):
     csv_text: str
+
+
+class ActivateRefillRoundRequest(BaseModel):
+    round_number: int | None = None
 
 
 app = FastAPI(title="Annotation Coordinator", version="0.1.0")
@@ -54,8 +66,17 @@ def get_config() -> Dict[str, Any]:
 
 @app.put("/api/config")
 def put_config(payload: ConfigUpdate) -> Dict[str, Any]:
-    save_config(payload.config)
-    return payload.config
+    try:
+        save_config(payload.config)
+        return load_config()
+    except ConfigValidationError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message": "Config validation failed.",
+                "errors": exc.errors,
+            },
+        ) from exc
 
 
 @app.get("/api/projects")
@@ -123,6 +144,67 @@ def chunk_accept_import(project_id: str, chunk_id: int, payload: CsvImportReques
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
+@app.get("/api/projects/{project_id}/invalid-retry-rows")
+def project_invalid_retry_rows(project_id: str) -> Dict[str, Any]:
+    try:
+        return {"invalid_retry_rows": get_invalid_retry_rows(project_id)}
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/projects/{project_id}/clear-invalid-retry-rows")
+def project_clear_invalid_retry_rows(project_id: str) -> Dict[str, Any]:
+    try:
+        return clear_invalid_retry_rows(project_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.get("/api/projects/{project_id}/backlog")
+def project_backlog(project_id: str) -> Dict[str, Any]:
+    try:
+        return {"backlog_rows": load_backlog_rows(get_project_paths(project_id))}
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/projects/{project_id}/chunks/{chunk_id}/preview-retry-import")
+def chunk_preview_retry_import(project_id: str, chunk_id: int, payload: CsvImportRequest) -> Dict[str, Any]:
+    try:
+        return preview_retry_import(project_id, chunk_id, payload.csv_text)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/projects/{project_id}/chunks/{chunk_id}/apply-retry-import")
+def chunk_apply_retry_import(project_id: str, chunk_id: int, payload: CsvImportRequest) -> Dict[str, Any]:
+    try:
+        return apply_retry_import(project_id, chunk_id, payload.csv_text)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/projects/{project_id}/generate-refill-round")
+def project_generate_refill_round(project_id: str) -> Dict[str, Any]:
+    try:
+        return generate_refill_round(project_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/projects/{project_id}/activate-refill-round")
+def project_activate_refill_round(
+    project_id: str,
+    payload: ActivateRefillRoundRequest | None = None,
+) -> Dict[str, Any]:
+    try:
+        return activate_refill_round(project_id, payload.round_number if payload else None)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
 @app.post("/api/projects/{project_id}/merge")
 def project_merge(project_id: str) -> Dict[str, Any]:
     try:
@@ -142,4 +224,3 @@ def project_merge_status(project_id: str) -> Dict[str, Any]:
         return get_project_summary(project_id)["merge_summary"] or {}
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-

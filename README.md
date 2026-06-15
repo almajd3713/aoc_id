@@ -90,7 +90,7 @@ Default behavior:
 - uses `MultiTrain.Shuffled.csv` as the source pool
 - removes unusable rows, exact duplicates, and conservative near-duplicates
 - samples a balanced pool across `MSA`, `DIAL_EGY`, `DIAL_GLF`, and `DIAL_LEV`
-- writes annotation chunk files of `80` rows each to `artifacts/masked_dataset/chunks/`
+- writes annotation chunk files of `50` rows each to `artifacts/masked_dataset/chunks/`
 - copies the first `2` chunks into `artifacts/masked_dataset/pilot/` for a pilot annotation pass
 - creates `clean_candidates.csv`, `rejections.csv`, `chunk_manifest.csv`, and `summary.json`
 
@@ -132,6 +132,7 @@ npm run dev
 Key behavior:
 - defaults to the `pilot` project from `app_state/config.json`
 - generates a prompt for the current chunk
+- can optionally include a reference `row_id` column in the prompt CSV to help external models keep row order and coverage straight
 - accepts a pasted full-CSV response from an external AI
 - previews validation and changed rows before acceptance
 - writes accepted chunk copies to `app_state/projects/<project>/accepted/`

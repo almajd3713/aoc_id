@@ -40,6 +40,10 @@ body {
   box-shadow: 0 18px 40px rgba(84, 69, 45, 0.08);
 }
 
+.panel-wide {
+  grid-column: 1 / -1;
+}
+
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -60,13 +64,25 @@ body {
   gap: 10px;
 }
 
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
 textarea,
+input,
 select,
 button {
   font: inherit;
 }
 
 textarea,
+input,
 select {
   width: 100%;
   border-radius: 12px;
@@ -114,6 +130,41 @@ button:disabled {
   color: #7a3215;
 }
 
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.counter-pill {
+  background: #f0e3d4;
+  color: #7a4e1f;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.invalid-list {
+  display: grid;
+  gap: 12px;
+}
+
+.invalid-item {
+  background: #fff7f2;
+  border: 1px solid #ebcbb8;
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -144,9 +195,47 @@ td {
   outline: 2px solid #5d7f6d;
 }
 
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.markers-panel {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.marker-list {
+  display: grid;
+  gap: 10px;
+}
+
+.marker-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.error-text {
+  color: #7a3215;
+}
+
 @media (max-width: 960px) {
   .hero,
   .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-grid {
     grid-template-columns: 1fr;
   }
 }

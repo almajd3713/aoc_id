@@ -1,6 +1,31 @@
 {
   "project_id": "pilot",
-  "current_chunk_id": 1,
-  "accepted_chunks": [],
-  "last_merge_summary": null
+  "current_chunk_id": null,
+  "accepted_chunks": [
+    1,
+    2
+  ],
+  "last_merge_summary": {
+    "approved_rows": 96,
+    "error_rows": 0,
+    "dialect_counts": {
+      "DIAL_EGY": 23,
+      "DIAL_GLF": 25,
+      "DIAL_LEV": 23,
+      "MSA": 25
+    }
+  },
+  "invalid_retry_rows": [],
+  "chunk_metrics": {
+    "1": {
+      "original_row_count": 50,
+      "accepted_row_count": 46,
+      "dropped_backlog_row_count": 4
+    },
+    "2": {
+      "original_row_count": 50,
+      "accepted_row_count": 50,
+      "dropped_backlog_row_count": 0
+    }
+  }
 }

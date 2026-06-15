@@ -7,18 +7,22 @@ Current chunk:
 - rows: `{row_count}`
 
 Instructions:
-- Edit the CSV in place conceptually and return the full CSV content only.
+- {output_csv_instruction}
 - Keep `original_text` unchanged.
-- Fill `masked_text`, `mask_spans_json`, `mask_count`, `annotation_status`, and `notes` when needed.
+- Fill only `masked_text`; all metadata will be generated automatically afterward.
+- {row_id_instruction}
 - Use typed placeholders like `[PERSON_1]`, `[LOC_1]`, `[ORG_1]`.
 - Restart numbering per row.
 - Keep numbering contiguous within each mask type in a row.
 - Reuse the same placeholder for repeated mentions of the same entity in the same row.
-- If uncertain, keep the row pending and explain briefly in `notes`.
-- Do not rename columns or change schema.
+- If uncertain, include `[UNCERTAIN]` or `[REVIEW]` somewhere in `masked_text`; the app will mark that row as pending automatically.
+- Do not rename columns or add extra metadata columns.
 - Return the full edited CSV only, covering every row in the chunk.
+- Prompt row-id context enabled: `{include_row_id_in_prompt}`
+- Row matching mode: `{row_matching}`
+- Validate original_text against row_id: `{validate_original_text_with_row_id}`
 
-Masking guidelines:
+Agent guidelines:
 {guidelines}
 
 Raw CSV for the whole chunk:

@@ -1,0 +1,2 @@
+chunk_id,file_name,row_count,dialect_counts_json,sha256,status
+1,chunk_0001.csv,4,"{""DIAL_EGY"": 2, ""DIAL_LEV"": 2}",f1f4fe7a206a403d8bb24f8a5cb2db4a351853cea51cbf6c31f9b7528844db7f,pending

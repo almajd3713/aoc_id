@@ -352,6 +352,9 @@ def write_outputs(
 
     ordered = interleave_by_dialect(sampled_candidates, seed=17)
     chunks_dir = output_dir / "chunks"
+    if chunks_dir.exists():
+        for stale_chunk in chunks_dir.glob("chunk_*.csv"):
+            stale_chunk.unlink()
     manifest_rows: List[Dict[str, object]] = []
     for chunk_index, start in enumerate(range(0, len(ordered), chunk_size), start=1):
         rows = ordered[start : start + chunk_size]
@@ -381,6 +384,9 @@ def write_outputs(
     pilot_manifest_rows = manifest_rows[:pilot_chunks]
     pilot_dir = output_dir / "pilot"
     pilot_chunks_dir = pilot_dir / "chunks"
+    if pilot_chunks_dir.exists():
+        for stale_chunk in pilot_chunks_dir.glob("chunk_*.csv"):
+            stale_chunk.unlink()
     for manifest_row in pilot_manifest_rows:
         chunk_path = chunks_dir / str(manifest_row["file_name"])
         pilot_chunk_path = pilot_chunks_dir / str(manifest_row["file_name"])
@@ -431,7 +437,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--chunk-size",
-        default=80,
+        default=50,
         type=int,
         help="Rows per annotation chunk file.",
     )

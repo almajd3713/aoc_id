@@ -1,0 +1,122 @@
+{
+  "seed": 17,
+  "input_csv": "app_state/projects/full/merged/masked_dataset_merged.csv",
+  "public_fraction": 0.1,
+  "private_fraction": 0.1,
+  "approved_rows_total": 6048,
+  "participant_train_columns": [
+    "id",
+    "original_text",
+    "masked_text"
+  ],
+  "participant_test_columns": [
+    "id",
+    "original_text"
+  ],
+  "sample_submission_columns": [
+    "id",
+    "masked_text"
+  ],
+  "label_columns": [
+    "id",
+    "original_text",
+    "masked_text",
+    "mask_spans_json"
+  ],
+  "solution_columns": [
+    "id",
+    "Usage",
+    "original_text",
+    "masked_text",
+    "mask_spans_json"
+  ],
+  "solution_split_column": "Usage",
+  "metric_artifact": "metric.py",
+  "train_id_format": "train_XXXXXX",
+  "test_id_format": "test_XXXXXX",
+  "participant_files_hide_dialect": true,
+  "supported_masked_summary": {
+    "row_count": 2748,
+    "dialect_counts": {
+      "DIAL_EGY": 796,
+      "DIAL_GLF": 562,
+      "DIAL_LEV": 755,
+      "MSA": 635
+    },
+    "mask_count_buckets": {
+      "1": 1424,
+      "2": 678,
+      "3": 267,
+      "4": 164,
+      "5+": 215
+    }
+  },
+  "unmasked_train_only_summary": {
+    "row_count": 3296,
+    "dialect_counts": {
+      "DIAL_EGY": 688,
+      "DIAL_GLF": 986,
+      "DIAL_LEV": 748,
+      "MSA": 874
+    },
+    "mask_count_buckets": {
+      "0": 3296
+    }
+  },
+  "masked_train_summary": {
+    "row_count": 2214,
+    "dialect_counts": {
+      "DIAL_EGY": 642,
+      "DIAL_GLF": 454,
+      "DIAL_LEV": 607,
+      "MSA": 511
+    },
+    "mask_count_buckets": {
+      "1": 1142,
+      "2": 544,
+      "3": 219,
+      "4": 134,
+      "5+": 175
+    }
+  },
+  "public_test_summary": {
+    "row_count": 267,
+    "dialect_counts": {
+      "DIAL_EGY": 77,
+      "DIAL_GLF": 54,
+      "DIAL_LEV": 74,
+      "MSA": 62
+    },
+    "mask_count_buckets": {
+      "1": 141,
+      "2": 67,
+      "3": 24,
+      "4": 15,
+      "5+": 20
+    }
+  },
+  "private_test_summary": {
+    "row_count": 267,
+    "dialect_counts": {
+      "DIAL_EGY": 77,
+      "DIAL_GLF": 54,
+      "DIAL_LEV": 74,
+      "MSA": 62
+    },
+    "mask_count_buckets": {
+      "1": 141,
+      "2": 67,
+      "3": 24,
+      "4": 15,
+      "5+": 20
+    }
+  },
+  "combined_test_row_count": 534,
+  "train_row_count": 5510,
+  "excluded_row_count": 4,
+  "excluded_reasons": {
+    "unsupported_mask_types:DEMONYM": 2,
+    "unsupported_mask_types:DEMONYM,EVENT": 1,
+    "unsupported_mask_types:EVENT": 1
+  }
+}

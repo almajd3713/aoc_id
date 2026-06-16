@@ -1,0 +1,10 @@
+{
+  "approved_rows": 3723,
+  "error_rows": 0,
+  "dialect_counts": {
+    "DIAL_EGY": 913,
+    "DIAL_GLF": 956,
+    "DIAL_LEV": 924,
+    "MSA": 930
+  }
+}

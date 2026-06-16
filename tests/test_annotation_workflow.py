@@ -24,6 +24,7 @@ from annotation_app.backend.workflow import (
     preview_import,
     preview_retry_import,
     save_config,
+    skip_invalid_retry_cache,
 )
 
 
@@ -591,6 +592,30 @@ class AnnotationWorkflowTests(unittest.TestCase):
         paths = get_project_paths("pilot", self.config)
         state = load_session_state(paths)
         self.assertEqual(state["invalid_retry_rows"], [])
+
+    def test_skip_invalid_retry_cache_advances_chunk_and_moves_rows_to_backlog(self) -> None:
+        invalid_csv = (
+            "original_text,masked_text\n"
+            'زار محمد صلاح القاهرة,زار [PERSON_1] [LOC_1]\n'
+        )
+        preview_import("pilot", 1, invalid_csv, self.config)
+
+        result = skip_invalid_retry_cache("pilot", 1, self.config)
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["chunk_id"], 1)
+        self.assertIn("next_chunk", result)
+
+        paths = get_project_paths("pilot", self.config)
+        backlog_rows = load_backlog_rows(paths)
+        self.assertEqual(len(backlog_rows), 1)
+        self.assertEqual(backlog_rows[0]["example_id"], "ex1")
+
+        state = load_session_state(paths)
+        self.assertEqual(state["invalid_retry_rows"], [])
+        self.assertEqual(state["current_chunk_id"], None)
+
+        accepted_path = self.workspace_dir / "accepted" / "chunk_0001.csv"
+        self.assertTrue(accepted_path.exists())
 
 
 if __name__ == "__main__":

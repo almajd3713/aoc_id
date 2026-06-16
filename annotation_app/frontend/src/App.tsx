@@ -11,6 +11,7 @@ import type {
   ProjectConfig,
   ProjectSummary,
   RefillRoundResponse,
+  SkipInvalidRetryCacheResponse,
 } from "./types";
 
 const API_BASE = "http://127.0.0.1:8000/api";
@@ -350,6 +351,37 @@ function App() {
     await loadProject(projectId);
   }
 
+  async function handleSkipInvalidCache() {
+    if (currentChunkId === null) {
+      return;
+    }
+    try {
+      const data = await fetchJson<SkipInvalidRetryCacheResponse>(
+        `/projects/${projectId}/chunks/${currentChunkId}/skip-invalid-retry-cache`,
+        {
+          method: "POST",
+        },
+      );
+      if (!data.ok) {
+        setMessage(`Skip failed: ${data.error ?? "unknown error"}.`);
+        return;
+      }
+      setPreview(null);
+      setCsvText("");
+      setRetryCsvText("");
+      setMessage(
+        `Skipped the invalid retry cache for the current chunk and advanced the queue.${data.next_chunk ? ` Next chunk: ${data.next_chunk.file_name}.` : ""}`,
+      );
+      await loadProject(projectId);
+      if (data.next_chunk?.chunk_id !== undefined) {
+        setCurrentChunkId(data.next_chunk.chunk_id);
+        await loadPrompt(data.next_chunk.chunk_id);
+      }
+    } catch (error) {
+      setMessage(extractApiErrorMessage(error));
+    }
+  }
+
   async function handleGenerateRefillRound() {
     setIsGeneratingRefill(true);
     try {
@@ -676,6 +708,9 @@ function App() {
             </button>
             <button onClick={handleClearInvalidCache} disabled={invalidRetryRows.length === 0}>
               Clear Invalid Cache
+            </button>
+            <button onClick={handleSkipInvalidCache} disabled={invalidRetryRows.length === 0 || currentChunkId === null}>
+              Skip Cache And Advance
             </button>
           </div>
           {invalidRetryRows.length > 0 ? (

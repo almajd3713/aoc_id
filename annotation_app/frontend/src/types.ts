@@ -206,3 +206,21 @@ export type AcceptResponse = {
     };
   };
 };
+
+export type SkipInvalidRetryCacheResponse = {
+  ok: boolean;
+  error?: string;
+  preview?: PreviewResponse;
+  next_chunk?: ChunkSummary;
+  accepted_path?: string;
+  auto_merge?: boolean;
+  merge_summary?: {
+    approved_rows: number;
+    error_rows: number;
+    summary: {
+      approved_rows: number;
+      error_rows: number;
+      dialect_counts: Record<string, number>;
+    };
+  };
+};

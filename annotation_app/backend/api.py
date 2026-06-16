@@ -29,6 +29,7 @@ from annotation_app.backend.workflow import (
     preview_import,
     preview_retry_import,
     save_config,
+    skip_invalid_retry_cache,
 )
 
 
@@ -180,6 +181,14 @@ def chunk_preview_retry_import(project_id: str, chunk_id: int, payload: CsvImpor
 def chunk_apply_retry_import(project_id: str, chunk_id: int, payload: CsvImportRequest) -> Dict[str, Any]:
     try:
         return apply_retry_import(project_id, chunk_id, payload.csv_text)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/projects/{project_id}/chunks/{chunk_id}/skip-invalid-retry-cache")
+def chunk_skip_invalid_retry_cache(project_id: str, chunk_id: int) -> Dict[str, Any]:
+    try:
+        return skip_invalid_retry_cache(project_id, chunk_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 

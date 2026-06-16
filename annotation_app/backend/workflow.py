@@ -1353,6 +1353,67 @@ def _compare_rows(
     return changed_count, changed_rows
 
 
+def _finalize_chunk_acceptance(
+    project_id: str,
+    chunk_id: int,
+    preview: Dict[str, object],
+    config: Dict[str, object] | None = None,
+) -> Dict[str, object]:
+    paths = get_project_paths(project_id, config)
+    manifest_row = next(row for row in load_manifest_rows(paths) if int(row["chunk_id"]) == int(chunk_id))
+
+    summary = preview["summary"]
+    if summary["invalid_rows"] > 0:
+        return {"ok": False, "error": "invalid_rows_present", "preview": preview}
+    if summary["pending_rows"] > 0 and not paths.allow_pending_accept:
+        return {"ok": False, "error": "pending_rows_present", "preview": preview}
+
+    accepted_path = get_accepted_chunk_path(paths, manifest_row["file_name"])
+    write_csv(accepted_path, preview["reconstructed_rows"], OUTPUT_COLUMNS)
+
+    state = load_session_state(paths)
+    accepted_chunks = set(state.get("accepted_chunks", []))
+    accepted_chunks.add(int(chunk_id))
+    state["accepted_chunks"] = sorted(accepted_chunks)
+    _clear_invalid_retry_rows_for_chunk(state, chunk_id)
+    chunk_metrics = state.get("chunk_metrics", {})
+    chunk_metrics[str(chunk_id)] = {
+        "original_row_count": int(manifest_row["row_count"]),
+        "accepted_row_count": len(preview["reconstructed_rows"]),
+        "dropped_backlog_row_count": max(int(manifest_row["row_count"]) - len(preview["reconstructed_rows"]), 0),
+    }
+    state["chunk_metrics"] = chunk_metrics
+    next_chunk = get_next_chunk(project_id, config)
+    state["current_chunk_id"] = next_chunk["chunk_id"] if next_chunk else None
+    save_session_state(paths, state)
+
+    response: Dict[str, object] = {
+        "ok": True,
+        "accepted_path": str(accepted_path),
+        "chunk_id": chunk_id,
+        "auto_merge": paths.auto_merge,
+    }
+
+    if paths.auto_merge:
+        approved_rows, error_rows = merge_chunks(paths.accepted_dir, paths.merged_dir)
+        merge_summary = json.loads((paths.merged_dir / "merge_summary.json").read_text(encoding="utf-8"))
+        state["last_merge_summary"] = merge_summary
+        save_session_state(paths, state)
+        response["merge_summary"] = {
+            "approved_rows": approved_rows,
+            "error_rows": error_rows,
+            "summary": merge_summary,
+        }
+
+    if paths.auto_advance:
+        next_chunk = get_next_chunk(project_id, config)
+        response["next_chunk"] = next_chunk
+        state["current_chunk_id"] = next_chunk["chunk_id"] if next_chunk else None
+        save_session_state(paths, state)
+
+    return response
+
+
 def _error_headers(paths: ProjectPaths, fieldnames: Sequence[str]) -> Dict[str, object]:
     if paths.row_matching == ROW_MATCHING_STRICT_ROW_ID and list(fieldnames) == AGENT_COLUMNS:
         return {
@@ -1998,56 +2059,99 @@ def accept_import(
         if not preview.get("ok"):
             return preview
 
-    summary = preview["summary"]
-    if summary["invalid_rows"] > 0:
-        return {"ok": False, "error": "invalid_rows_present", "preview": preview}
-    if summary["pending_rows"] > 0 and not paths.allow_pending_accept:
-        return {"ok": False, "error": "pending_rows_present", "preview": preview}
+    return _finalize_chunk_acceptance(project_id, chunk_id, preview, config)
 
-    accepted_path = get_accepted_chunk_path(paths, manifest_row["file_name"])
-    write_csv(accepted_path, preview["reconstructed_rows"], OUTPUT_COLUMNS)
+
+def skip_invalid_retry_cache(
+    project_id: str,
+    chunk_id: int,
+    config: Dict[str, object] | None = None,
+) -> Dict[str, object]:
+    paths = get_project_paths(project_id, config)
+    manifest_row = next(row for row in load_manifest_rows(paths) if int(row["chunk_id"]) == int(chunk_id))
+    working_path = get_working_chunk_path(paths, manifest_row["file_name"])
+    if not working_path.exists():
+        return {
+            "ok": False,
+            "error": "missing_working_preview",
+            "message": "This chunk does not have a working preview yet. Run a full chunk preview before skipping invalid rows.",
+        }
+
+    working_rows = load_working_preview(paths, manifest_row["file_name"])
+    cached_rows = get_invalid_retry_rows(project_id, chunk_id, config)
+    open_cached_rows = [row for row in cached_rows if row.get("retry_status", "open") == "open"]
+
+    if not open_cached_rows:
+        return accept_import(project_id, chunk_id, "", config)
+
+    open_cached_ids = {row["example_id"] for row in open_cached_rows}
+    reduced_rows = [row for row in working_rows if row.get("example_id") not in open_cached_ids]
+
+    dropped_backlog_rows = []
+    working_by_id = {row["example_id"]: row for row in working_rows}
+    for invalid_row in open_cached_rows:
+        source_row = working_by_id.get(str(invalid_row.get("example_id", "")))
+        if not source_row:
+            continue
+        dropped_backlog_rows.append(
+            {
+                "example_id": source_row.get("example_id", ""),
+                "source_row_id": source_row.get("source_row_id", ""),
+                "dialect": source_row.get("dialect", ""),
+                "original_text": source_row.get("original_text", ""),
+                "normalized_text": source_row.get("normalized_text", ""),
+                "chunk_id": chunk_id,
+                "chunk_file_name": manifest_row["file_name"],
+                "last_attempted_masked_text": invalid_row.get("attempted_masked_text", ""),
+                "latest_errors": " | ".join(invalid_row.get("errors", [])),
+                "dropped_at": _utc_now_iso(),
+            }
+        )
+
+    backlog_rows = _append_backlog_rows(paths, dropped_backlog_rows)
+    save_working_preview(paths, manifest_row["file_name"], reduced_rows)
 
     state = load_session_state(paths)
-    accepted_chunks = set(state.get("accepted_chunks", []))
-    accepted_chunks.add(int(chunk_id))
-    state["accepted_chunks"] = sorted(accepted_chunks)
-    _clear_invalid_retry_rows_for_chunk(state, chunk_id)
+    state["invalid_retry_rows"] = [
+        row
+        for row in state.get("invalid_retry_rows", [])
+        if int(row.get("chunk_id", -1)) != int(chunk_id)
+    ]
     chunk_metrics = state.get("chunk_metrics", {})
     chunk_metrics[str(chunk_id)] = {
         "original_row_count": int(manifest_row["row_count"]),
-        "accepted_row_count": len(preview["reconstructed_rows"]),
-        "dropped_backlog_row_count": max(int(manifest_row["row_count"]) - len(preview["reconstructed_rows"]), 0),
+        "accepted_row_count": len(reduced_rows),
+        "dropped_backlog_row_count": len(dropped_backlog_rows),
     }
     state["chunk_metrics"] = chunk_metrics
-    next_chunk = get_next_chunk(project_id, config)
-    state["current_chunk_id"] = next_chunk["chunk_id"] if next_chunk else None
     save_session_state(paths, state)
 
-    response: Dict[str, object] = {
-        "ok": True,
-        "accepted_path": str(accepted_path),
-        "chunk_id": chunk_id,
-        "auto_merge": paths.auto_merge,
-    }
+    summary, validation_rows = _build_validation_summary_from_rows(reduced_rows)
+    changed_count, changed_rows = _compare_rows(
+        load_chunk_rows(get_chunk_source_path(paths, manifest_row["file_name"])),
+        reduced_rows,
+    )
+    summary["changed_rows"] = changed_count
 
-    if paths.auto_merge:
-        approved_rows, error_rows = merge_chunks(paths.accepted_dir, paths.merged_dir)
-        merge_summary = json.loads((paths.merged_dir / "merge_summary.json").read_text(encoding="utf-8"))
-        state["last_merge_summary"] = merge_summary
-        save_session_state(paths, state)
-        response["merge_summary"] = {
-            "approved_rows": approved_rows,
-            "error_rows": error_rows,
-            "summary": merge_summary,
-        }
-
-    if paths.auto_advance:
-        next_chunk = get_next_chunk(project_id, config)
-        response["next_chunk"] = next_chunk
-        state["current_chunk_id"] = next_chunk["chunk_id"] if next_chunk else None
-        save_session_state(paths, state)
-
-    return response
+    return _finalize_chunk_acceptance(
+        project_id,
+        chunk_id,
+        {
+            "ok": True,
+            "chunk_id": chunk_id,
+            "file_name": manifest_row["file_name"],
+            "summary": summary,
+            "validation_rows": validation_rows,
+            "changed_rows": changed_rows,
+            "reconstructed_rows": reduced_rows,
+            "working_preview_path": str(working_path),
+            "invalid_retry_rows": state["invalid_retry_rows"],
+            "dropped_backlog_rows": dropped_backlog_rows,
+            "dropped_backlog_row_count": len(dropped_backlog_rows),
+            "backlog_row_count": len(backlog_rows),
+        },
+        config,
+    )
 
 
 def get_project_summary(project_id: str, config: Dict[str, object] | None = None) -> Dict[str, object]:

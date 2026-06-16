@@ -1,10 +1,10 @@
 {
-  "approved_rows": 3723,
+  "approved_rows": 6048,
   "error_rows": 0,
   "dialect_counts": {
-    "DIAL_EGY": 913,
-    "DIAL_GLF": 956,
-    "DIAL_LEV": 924,
-    "MSA": 930
+    "DIAL_EGY": 1484,
+    "DIAL_GLF": 1548,
+    "DIAL_LEV": 1503,
+    "MSA": 1513
   }
 }
